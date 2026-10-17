@@ -236,6 +236,71 @@ const tileVB: Record<string, string> = {
           el.addEventListener('mouseleave', () => { el.style.transform = ''; });
         });
       }
+
+      // selection: card lifts out, spins once, settles centred, then grows and dissolves into its link
+      const backFace = '<span class="card-corner tl"></span><span class="card-corner tr"></span><span class="card-corner bl"></span><span class="card-corner br"></span><span class="card-fx"><span class="card-vortex"></span></span>';
+      let busy = false;
+
+      const clearSelection = () => {
+        document.querySelectorAll('.card-select').forEach((n) => n.remove());
+        cards.forEach((c) => { (c as HTMLElement).style.visibility = ''; });
+        busy = false;
+      };
+      // bfcache can restore the page mid-animation when the user navigates back
+      window.addEventListener('pageshow', (e) => { if (e.persisted) clearSelection(); });
+
+      const playSelect = (el: HTMLAnchorElement) => {
+        const rect = el.getBoundingClientRect();
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+        // layout size vs on-screen size differ under the large-screen zoom
+        const z = rect.width / w;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        // phones: exactly the screen width. Desktop: about a third of the page width.
+        const targetW = Math.min(vw <= 600 ? vw : vw / 3, vh * 0.9 * (w / h));
+        const s = targetW / w;
+        const at = (scale: number) => `translate(${(vw - w * scale) / 2}px, ${(vh - h * scale) / 2}px) scale(${scale})`;
+
+        const shade = document.createElement('div');
+        shade.className = 'card-select card-select-shade';
+        const stage = document.createElement('div');
+        stage.className = 'card-select card-select-stage';
+        stage.style.width = `${w}px`;
+        stage.style.height = `${h}px`;
+        const flip = document.createElement('div');
+        flip.className = 'card-select-flip';
+        const front = el.cloneNode(true) as HTMLElement;
+        front.removeAttribute('href');
+        front.style.transform = 'none';
+        front.classList.add('card-face');
+        const back = document.createElement('div');
+        back.className = 'card card-face card-back';
+        back.innerHTML = backFace;
+        flip.append(front, back);
+        stage.append(flip);
+        document.body.append(shade, stage);
+        el.style.visibility = 'hidden';
+
+        const from = `translate(${rect.left}px, ${rect.top}px) scale(${z})`;
+        shade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, fill: 'forwards' });
+        flip.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(360deg)' }], { duration: 950, easing: 'cubic-bezier(.45, 0, .2, 1)', fill: 'forwards' });
+        stage.animate([{ transform: from }, { transform: at(s) }], { duration: 950, easing: 'cubic-bezier(.2, .7, .2, 1)', fill: 'forwards' })
+          .finished
+          .then(() => stage.animate([{ transform: at(s), opacity: 1 }, { transform: at(s * 1.5), opacity: 0 }], { duration: 550, delay: 150, easing: 'ease-in', fill: 'forwards' }).finished)
+          .then(() => { window.location.href = el.href; });
+      };
+
+      cards.forEach((card) => {
+        const el = card as HTMLAnchorElement;
+        el.addEventListener('click', (e) => {
+          // modified clicks keep the browser's own new-tab behaviour
+          if (reduce || busy || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          busy = true;
+          playSelect(el);
+        });
+      });
     </script>
   </body>
 </html>
