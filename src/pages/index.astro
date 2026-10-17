@@ -224,18 +224,52 @@ const tileVB: Record<string, string> = {
       // cursor-tracked 3D tilt + float on skill cards
       const cards = document.querySelectorAll('.card');
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!reduce) {
-        cards.forEach((card) => {
-          const el = card as HTMLElement;
-          el.addEventListener('mousemove', (e) => {
-            const r = el.getBoundingClientRect();
-            const px = (e.clientX - r.left) / r.width - 0.5;
-            const py = (e.clientY - r.top) / r.height - 0.5;
-            el.style.transform = `translateY(-10px) rotateY(${px * 30}deg) rotateX(${-py * 30}deg) scale(1.15)`;
-          });
-          el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+      // Follow the cursor per frame. A CSS transition here would restart on every mousemove and trail behind.
+      const tilt = (el: HTMLElement) => {
+        const rest = { rx: 0, ry: 0, s: 1, ty: 0 };
+        const cur = { ...rest };
+        const tgt = { ...rest };
+        let raf = 0;
+        let last = 0;
+        const frame = (t: number) => {
+          const k = 1 - Math.pow(0.75, Math.max(t - last, 1) / 16.7);
+          last = t;
+          let moving = false;
+          for (const key of ['rx', 'ry', 's', 'ty'] as const) {
+            cur[key] += (tgt[key] - cur[key]) * k;
+            if (Math.abs(tgt[key] - cur[key]) > 0.001) moving = true;
+          }
+          el.style.transform = `translateY(${cur.ty}px) rotateY(${cur.ry}deg) rotateX(${cur.rx}deg) scale(${cur.s})`;
+          raf = moving ? requestAnimationFrame(frame) : 0;
+        };
+        const kick = () => {
+          if (raf) return;
+          last = performance.now();
+          raf = requestAnimationFrame(frame);
+        };
+        el.addEventListener('mouseenter', () => {
+          el.classList.add('tilting');
+          tgt.s = 1.15;
+          tgt.ty = -10;
+          kick();
         });
-      }
+        el.addEventListener('mousemove', (e) => {
+          const r = el.getBoundingClientRect();
+          tgt.ry = ((e.clientX - r.left) / r.width - 0.5) * 30;
+          tgt.rx = -((e.clientY - r.top) / r.height - 0.5) * 30;
+          kick();
+        });
+        el.addEventListener('mouseleave', () => {
+          cancelAnimationFrame(raf);
+          raf = 0;
+          Object.assign(cur, rest);
+          Object.assign(tgt, rest);
+          // dropping .tilting restores the CSS transform transition, so the card eases back to rest
+          el.classList.remove('tilting');
+          el.style.transform = '';
+        });
+      };
+      if (!reduce) cards.forEach((card) => tilt(card as HTMLElement));
 
       // selection: card lifts out, spins once, settles centred, then grows and dissolves into its link
       const backFace = '<span class="card-corner tl"></span><span class="card-corner tr"></span><span class="card-corner bl"></span><span class="card-corner br"></span><span class="card-fx"><span class="card-vortex"></span></span>';
