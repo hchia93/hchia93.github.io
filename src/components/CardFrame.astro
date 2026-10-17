@@ -1,0 +1,21 @@
+---
+// Shared card frame: black notched border, white keyline, corner crescents with a dot trail (a loading spinner in moon form) and the embroidered bug crest.
+// Used by both faces of the identity card, so the two sides always match.
+import CrestBug from './CrestBug.astro';
+---
+<svg class="id-back-frame" viewBox="0 0 250 330" preserveAspectRatio="none" aria-hidden="true">
+  <path class="id-back-notch" fill-rule="evenodd" d="M0 0H250V330H0ZM24 6H226A18 18 0 0 0 244 24V306A18 18 0 0 0 226 324H24A18 18 0 0 0 6 306V24A18 18 0 0 0 24 6Z" />
+  {[[12.4, 12.4, 0], [237.6, 12.4, 90], [237.6, 317.6, 180], [12.4, 317.6, 270]].map(([x, y, r]) => (
+    <g transform={`translate(${x} ${y}) rotate(${r})`}>
+      <circle class="id-back-moon" r="6.5" />
+      <circle class="id-back-notch" cx="-1.6" cy="-1.6" r="5.8" />
+      <circle class="id-back-moon" cx="-1.71" cy="-4.7" r="0.95" />
+      <circle class="id-back-moon" cx="-3.54" cy="-3.54" r="0.75" />
+      <circle class="id-back-moon" cx="-4.7" cy="-1.71" r="0.55" />
+    </g>
+  ))}
+  <path class="id-back-line" vector-effect="non-scaling-stroke" d="M29.2 12H220.8A24 24 0 0 0 238 29.2V300.8A24 24 0 0 0 220.8 318H29.2A24 24 0 0 0 12 300.8V29.2A24 24 0 0 0 29.2 12Z" />
+</svg>
+<div class="id-crest" aria-hidden="true">
+  <CrestBug />
+</div>

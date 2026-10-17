@@ -1,0 +1,38 @@
+---
+// Embroidered winged bug: the MDI bug with a pair of slim wings layered behind it.
+// Rendered inside a `.id-crest` box, which stacks the layers and sizes them.
+// Stitching follows the card-back GitHub patch: vector satin (a different direction per region),
+// a fibre grain, a sewn inner seam, and a merrow border of dashes running along the contour.
+const crestWings = '<path d="M10 7.5C6 7.5 1.5 11.5 0 17C-1 21 1 23.5 3.5 21.5C6 19 9 14 11 9.5Z"/><path d="M14 7.5C18 7.5 22.5 11.5 24 17C25 21 23 23.5 20.5 21.5C18 19 15 14 13 9.5Z"/>';
+const crestBug = '<path d="M14 12h-4v-2h4m0 6h-4v-2h4m6-6h-2.81a6 6 0 0 0-1.82-1.96L17 4.41L15.59 3l-2.17 2.17a6 6 0 0 0-2.83 0L8.41 3L7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20z"/>';
+---
+<svg class="em-border crest-wings" viewBox="-2.5 1 29 24" set:html={`<g class="em-edge">${crestWings}</g><g class="em-stitch">${crestWings}</g>`} />
+<svg class="em-fill crest-wings" viewBox="-2.5 1 29 24" fill="currentColor">
+  <defs>
+    <pattern id="crest-satin-wing" width="0.8" height="0.8" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+      <rect width="0.8" height="0.4" fill="rgba(255, 255, 255, 0.24)" /><rect y="0.4" width="0.8" height="0.4" fill="rgba(0, 0, 0, 0.08)" />
+    </pattern>
+    <pattern id="crest-satin-body" width="0.8" height="0.8" patternUnits="userSpaceOnUse" patternTransform="rotate(80)">
+      <rect width="0.8" height="0.4" fill="rgba(255, 255, 255, 0.22)" /><rect y="0.4" width="0.8" height="0.4" fill="rgba(0, 0, 0, 0.1)" />
+    </pattern>
+    <filter id="crest-thread" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="2.4 0.6" numOctaves="2" seed="3" result="n" />
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.5 0 0 0 -0.2" result="shade" />
+      <feComposite in="shade" in2="SourceGraphic" operator="in" result="grain" />
+      <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="grain" /></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#crest-thread)">
+    <g set:html={crestWings} />
+    <g fill="url(#crest-satin-wing)" set:html={crestWings} />
+  </g>
+  <g class="crest-seam" set:html={crestWings} />
+</svg>
+<svg class="em-border crest-bug" viewBox="-2.5 1 29 24" set:html={`<g class="em-edge">${crestBug}</g><g class="em-stitch">${crestBug}</g>`} />
+<svg class="em-fill" viewBox="-2.5 1 29 24" fill="currentColor">
+  <g filter="url(#crest-thread)">
+    <g set:html={crestBug} />
+    <g fill="url(#crest-satin-body)" set:html={crestBug} />
+  </g>
+  <g class="crest-seam" set:html={crestBug} />
+</svg>

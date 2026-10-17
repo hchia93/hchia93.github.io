@@ -1,0 +1,52 @@
+---
+// Card-back design, single source for the identity card's back and the repository cards' flip side.
+import CardFrame from './CardFrame.astro';
+
+interface Props {
+  class?: string;
+  githubPath: string;
+}
+const { class: className, githubPath: ghPath } = Astro.props;
+---
+<div class:list={['id-back', className]}>
+  <span class="card-fx" aria-hidden="true"><span class="card-vortex"></span></span>
+  <CardFrame />
+  <svg class="id-back-decor" viewBox="0 0 250 330" aria-hidden="true">
+    <defs>
+      <path id="arc-tl" d="M36 128V103C36 72.6 60.6 48 91 48H112" />
+      <path id="arc-tr" d="M138 48H159C189.4 48 214 72.6 214 103V128" />
+      <path id="arc-bl" d="M36 202V227C36 257.4 60.6 282 91 282H112" />
+      <path id="arc-br" d="M138 282H159C189.4 282 214 257.4 214 227V202" />
+    </defs>
+    <g class="id-back-motto">
+      {['tl', 'tr', 'bl', 'br'].map((k) => (
+        <text dominant-baseline={k[0] === 'b' ? 'hanging' : undefined}><textPath href={`#arc-${k}`} startOffset="50%" text-anchor="middle">YOU GOT MUST HAVE</textPath></text>
+      ))}
+    </g>
+  </svg>
+  <svg class="id-patch" viewBox="0 0 120 120" aria-hidden="true">
+    <defs>
+      <clipPath id="patch-in"><circle cx="60" cy="61" r="47.5" /></clipPath>
+      <pattern id="st-white" width="1.6" height="1.6" patternUnits="userSpaceOnUse" patternTransform="rotate(55)">
+        <rect width="1.6" height="1.6" fill="#dde4eb" /><rect width="1.6" height="0.8" fill="#f8fafc" />
+      </pattern>
+      <pattern id="st-dark" width="1.4" height="1.4" patternUnits="userSpaceOnUse" patternTransform="rotate(55)">
+        <rect width="1.4" height="1.4" fill="#1a1d22" /><rect width="1.4" height="0.7" fill="#38404b" />
+      </pattern>
+      <clipPath id="patch-cat"><path transform="translate(12 12) scale(4)" d={ghPath} /></clipPath>
+      <filter id="thread" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="1.6 0.4" numOctaves="2" seed="3" result="n" />
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.55 0 0 0 -0.2" result="shade" />
+        <feComposite in="shade" in2="SourceGraphic" operator="in" result="grain" />
+        <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="grain" /></feMerge>
+      </filter>
+    </defs>
+    <circle cx="60" cy="61" r="53" fill="#121418" />
+    <circle cx="60" cy="61" r="51" fill="none" stroke="#3d434d" stroke-width="4" stroke-dasharray="0.8 1.1" />
+    <g clip-path="url(#patch-in)" filter="url(#thread)">
+      <rect width="120" height="120" fill="url(#st-white)" />
+      <rect width="120" height="120" fill="url(#st-dark)" clip-path="url(#patch-cat)" />
+    </g>
+    <path transform="translate(12 12) scale(4)" d={ghPath} fill="none" stroke="#0d0f12" stroke-width="0.3" stroke-linejoin="round" />
+  </svg>
+</div>

@@ -1,5 +1,17 @@
 :root {
   --bg: #0b0908;
+  /* card frame + back palette, swapped as a set by the colour presets */
+  --cb-frame: #121316;
+  --cb-face-1: #e3e8ee;
+  --cb-face-2: #b9c2cd;
+  --cb-face-3: #8f99a6;
+  --cb-ray: rgba(255, 255, 255, 0.55);
+  --cb-moon: #8d939c;
+  --cb-line: rgba(255, 255, 255, 0.9);
+  --cb-motto: #121316;
+  --cf-1: #e0a63a;
+  --cf-2: #ff7a2f;
+  --cf-3: #ff4a1f;
   --card: #15110f;
   --surface: #1b1613;
   --line: #2a2422;
@@ -80,6 +92,7 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .panel::after, .cta::after { animation: none; }
+  .id-flip-inner { transition: none; }
   .panel::before, .cta::before, .card-vortex, .card::after { animation: none; }
   .card:hover::after, .card:hover .card-burst { animation: none; }
 }
@@ -140,12 +153,12 @@ body::before {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  background: #ff7a2f;
+  background: var(--cf-2);
   border: none;
   border-radius: 0;
   min-height: 330px;
   padding: 26px 0 18px;
-  box-shadow: 0 14px 30px rgba(255, 74, 31, 0.24);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--cf-3) 24%, transparent);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -175,10 +188,163 @@ body::before {
   animation: grad-drift 13s ease infinite;
   pointer-events: none;
 }
+/* the identity card follows the colour preset; the banner keeps the site orange */
+.panel::after { background: linear-gradient(120deg, var(--cf-1), var(--cf-2), var(--cf-3), var(--cf-2), var(--cf-1)); }
 
 .panel > * {
   position: relative;
   z-index: 1;
+}
+
+/* identity card is two-sided: front = profile, back = background card (uncoloured for now) */
+.id-flip { perspective: 1400px; }
+
+.id-flip-inner {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.3, 1.25, 0.4, 1);
+}
+.id-flip.is-back .id-flip-inner { transform: rotateY(180deg); }
+
+.id-face {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* card back in the moth-tarot palette: pale gray-blue face, charcoal frame, white keyline */
+.id-back {
+  position: relative;
+  display: grid;
+  place-items: center;
+  transform: rotateY(180deg);
+  background: radial-gradient(80% 60% at 50% 50%, var(--cb-face-1), var(--cb-face-2) 60%, var(--cb-face-3));
+  /* inset black backs the SVG frame so subpixel gaps at fractional zoom never show the light face */
+  box-shadow: inset 0 0 0 3px var(--cb-frame), 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* colour preset picker under the identity card: each swatch shows its frame colour around its face colour */
+.theme-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent2);
+  background: linear-gradient(160deg, #221e1a, #110e0b);
+}
+.theme-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.theme-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.theme-swatch {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  cursor: pointer;
+  background: var(--sw-face);
+  border: 3px solid var(--sw-frame);
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+  transition: transform 0.15s ease;
+}
+.theme-swatch:hover { transform: translateY(-2px); }
+.theme-swatch[aria-checked='true'] { outline: 2px solid var(--accent2); outline-offset: 1px; }
+
+/* front face: the clipped profile panel plus the shared frame and crest, which may rise above the card */
+.id-front {
+  position: relative;
+  display: grid;
+}
+/* keep the content clear of the frame's keyline, corner moons and the crest hanging over the top edge */
+.id-front > .panel { grid-area: 1 / 1; padding: 34px 0 24px; }
+.id-front .id-foot { padding: 16px 26px 0; }
+
+/* 1px rim light so the black frame's silhouette reads against the dark page */
+.id-front::after,
+.id-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.16));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.id-back .card-fx { inset: 0; }
+
+/* the shared vortex is placed for the repo-card emblem. Centre it on this card's mark instead. */
+.id-back .card-vortex {
+  top: 50%;
+  width: 190%;
+  background: repeating-conic-gradient(from 0deg, var(--cb-ray) 0deg 4deg, transparent 4deg 11.25deg);
+}
+
+/* frame overlay is out of flow so it never sizes the flip grid */
+.id-back-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.id-back-notch { fill: var(--cb-frame); }
+.id-back-moon { fill: var(--cb-moon); }
+
+.id-back-decor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.id-back-motto {
+  fill: var(--cb-motto);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+/* embroidered winged bug crest, sitting over the top edge and allowed to rise above the card */
+.id-crest {
+  position: absolute;
+  top: -23px;
+  left: 50%;
+  z-index: 4;
+  display: grid;
+  width: 62px;
+  height: 51px;
+  transform: translateX(-50%);
+  color: #e0a63a;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.45));
+  pointer-events: none;
+}
+/* positioned so the filtered fill layers keep DOM paint order instead of jumping above the bug's edge */
+.id-crest svg { grid-area: 1 / 1; position: relative; width: 100%; height: 100%; overflow: visible; }
+.id-crest .crest-seam { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.3; stroke-linejoin: round; }
+.id-crest .crest-wings { color: #e6eaef; }
+.id-crest .crest-bug .em-edge * { stroke-width: 5px; }
+.id-back-line {
+  fill: none;
+  stroke: var(--cb-line);
+  stroke-width: 1.5;
+}
+
+.id-patch {
+  position: relative;
+  z-index: 1;
+  width: 120px;
+  height: 120px;
+  filter: drop-shadow(0 3px 2px rgba(20, 24, 30, 0.45)) drop-shadow(0 8px 14px rgba(20, 24, 30, 0.3));
 }
 
 .id-avatar {
@@ -296,14 +462,16 @@ body::before {
   gap: 12px;
 }
 
-.hero-orn {
+/* the golden bug as the title ornament, in flow instead of hanging off a card edge */
+.id-crest.hero-bug {
+  position: relative;
+  top: auto;
+  left: auto;
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  color: var(--accent2);
-  filter: drop-shadow(0 0 6px rgba(224, 166, 58, 0.45));
+  width: 46px;
+  height: 38px;
+  transform: none;
 }
-.hero-orn svg { width: 100%; height: 100%; }
 
 .hero h1 {
   font-size: 34px;
@@ -322,16 +490,13 @@ body::before {
   margin-top: 12px;
 }
 .hero-tag {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent2);
-  background: rgba(224, 166, 58, 0.12);
-  border: 1px solid rgba(224, 166, 58, 0.4);
-  border-radius: 0;
-  padding: 4px 10px;
+  color: #120e0b;
+  background: #ff4a1f;
+  padding: 5px 14px;
 }
 .hero-dot { display: none; }
 
@@ -343,6 +508,13 @@ body::before {
 }
 
 .hero-intro strong { color: var(--heading); font-weight: 700; }
+.hero-intro a.studio {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+.hero-intro a.studio:hover { filter: brightness(1.25); }
 
 .hero-flavor {
   margin-top: 8px;
@@ -520,7 +692,7 @@ section {
 
 .offer {
   display: grid;
-  grid-template-columns: minmax(170px, 30%) 1fr;
+  grid-template-columns: 190px 1fr;
   gap: 16px;
   align-items: center;
   padding: 5px 22px 5px 19px;
@@ -528,6 +700,16 @@ section {
   transition: background 0.15s ease;
 }
 .offer:last-child { border-bottom: none; }
+
+/* production scales and setups as tag chips, between the Roles title and its table */
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+}
+.mode-group { display: flex; gap: 8px; }
 .offer:hover { background: rgba(224, 166, 58, 0.05); }
 
 .offer-in { display: block; }
@@ -566,7 +748,7 @@ section {
 .offer-cn {
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--muted);
+  color: inherit;
 }
 
 
@@ -659,17 +841,9 @@ section {
   animation: meteor 8s linear infinite;
 }
 
-.cta-line, .cta-btn {
+.cta-btn {
   position: relative;
   z-index: 1;
-}
-
-.cta-line {
-  color: #fff;
-  font-size: 23px;
-  font-weight: 700;
-  max-width: 24ch;
-  line-height: 1.25;
 }
 
 .cta-btn {
@@ -757,7 +931,8 @@ section {
 }
 
 /* material surface: fine grain + warm top sheen + bottom vignette so the card reads as a textured plate */
-.card::before {
+.card::before,
+.id-back::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -770,7 +945,8 @@ section {
 }
 
 /* inset clip layer: keeps both vortices inside the card's inner frame, off the outer border */
-.card .card-fx {
+.card .card-fx,
+.id-back .card-fx {
   position: absolute;
   inset: 7px;
   z-index: 0;
@@ -871,10 +1047,36 @@ section {
   margin: 12px 0 10px;
   display: grid;
   place-items: center;
-  color: var(--accent2);
-  filter: drop-shadow(0 0 8px rgba(224, 166, 58, 0.45));
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55));
+  --wood: #a8733f;
+  --tassel: #ff6a26;
+  --ps-pad: #24272c;
+  --ps-dpad: #9097a1;
+  --ps-stick: #2e3238;
+  --ps-tri: #3cc79a;
+  --ps-cir: #ff5a5f;
+  --ps-crs: #6aa2ff;
+  --ps-sq: #f08ad6;
 }
-.card-emblem svg { position: relative; z-index: 2; width: 100%; height: 100%; }
+.card-emblem svg { grid-area: 1 / 1; position: relative; z-index: 2; width: 100%; height: 100%; overflow: visible; }
+.card-emblem .em-fill { filter: url(#embroider); }
+
+/* merrow border: a dark outline plus dashes that run along the contour, the same build as the card-back badge */
+.em-border * {
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+.em-edge * {
+  fill: #121418 !important;
+  stroke: #121418;
+  stroke-width: 4.5px;
+}
+.em-stitch * {
+  fill: none !important;
+  stroke: #3d434d;
+  stroke-width: 3.5px;
+  stroke-dasharray: 0.8px 1.1px;
+}
 
 /* name anchored at ~63% of the card height, centered on that line regardless of 1 or 2 lines */
 .card-name {
@@ -933,8 +1135,11 @@ section {
   top: 0;
   z-index: 901;
   transform-origin: 0 0;
-  perspective: 1400px;
   pointer-events: none;
+}
+
+.card-select-zoom {
+  perspective: 1400px;
 }
 
 .card-select-flip {
@@ -954,6 +1159,104 @@ section {
 }
 
 .card-select-flip .card-back { transform: rotateY(180deg); }
+
+/* click feedback: diamond flash and sparks, spawned at the pointer and removed after they fade */
+.click-fx {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.click-fx-ring {
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffb347;
+  box-shadow: 0 0 8px rgba(255, 122, 47, 0.6);
+}
+.click-fx-spark {
+  position: absolute;
+  left: -1px;
+  top: -5px;
+  width: 2px;
+  height: 10px;
+  background: linear-gradient(#fff3d6, #ff7a2f);
+  transform-origin: 1px 5px;
+}
+
+/* click feedback: occasional tracker-joke popup, styled like a game damage number */
+.click-joke {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1001;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffb347;
+  -webkit-text-stroke: 4px #120d09;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 #120d09, 0 0 12px rgba(255, 122, 47, 0.55);
+}
+
+/* resolution popups read as JIRA's green "done" state against the orange banner */
+.click-joke.resolve {
+  color: #8dffa8;
+  text-shadow: 0 3px 0 #120d09, 0 0 12px rgba(120, 255, 160, 0.5);
+}
+
+/* click feedback: a copy of the crest bug, anchored at its centre so it spawns under the pointer */
+.click-bug {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+/* banner flyby uses the same bug, positioned inside the clipped banner instead of the viewport */
+.click-bug.banner-bug {
+  position: absolute;
+  z-index: 1;
+}
+.click-bug.golden .id-crest {
+  color: #ffd84a;
+  filter: drop-shadow(0 0 4px #fff6c8) drop-shadow(0 0 12px rgba(255, 230, 120, 0.95)) drop-shadow(0 0 22px rgba(255, 190, 40, 0.8));
+}
+/* the title ornament keeps the gold colours with only a faint halo */
+.id-crest.hero-bug {
+  color: #ffd84a;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 5px rgba(255, 210, 90, 0.35));
+}
+.click-bug.golden .crest-wings,
+.hero-bug .crest-wings { color: #ffe27a; }
+.glitter {
+  position: absolute;
+  left: -9px;
+  top: -9px;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  background: radial-gradient(circle, #ffffff 0 40%, #fff0a0 75%);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 6px rgba(255, 220, 110, 0.9));
+}
+.click-bug .id-crest {
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+}
 
 /* ---------- Footer ---------- */
 footer {
